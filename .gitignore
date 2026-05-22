@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+extension/popup/node_modules/
+
+# Build output
+extension/popup/dist/
+
+# Environment
+.env
+backend/.env
+
+# Model files (large — add separately)
+extension/models/*.onnx
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*

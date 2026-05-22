@@ -1,0 +1,18 @@
+{
+  "app_name": "TruthLens",
+  "verdict_false": "False",
+  "verdict_misleading": "Misleading",
+  "verdict_unverified": "Unverified",
+  "verdict_true": "True",
+  "verdict_unknown": "Unknown",
+  "factchecking": "Fact-checking…",
+  "analyse_area": "Analyse Selected Area",
+  "draw_instruction": "Draw a rectangle over the area to analyse — press Esc to cancel",
+  "vote_agree": "Agree",
+  "vote_disagree": "Disagree",
+  "vote_report": "Report",
+  "why_flagged": "Why TruthLens flagged this",
+  "sources": "Sources",
+  "settings": "Settings",
+  "dashboard": "Dashboard"
+}

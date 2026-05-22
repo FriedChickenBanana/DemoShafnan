@@ -1,0 +1,19 @@
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import { resolve } from 'path';
+
+export default defineConfig({
+  plugins: [react()],
+  build: {
+    outDir: 'dist',
+    rollupOptions: {
+      input: resolve(__dirname, 'index.html'),
+    },
+    // Keep bundle small for extension
+    minify: true,
+  },
+  // Allow chrome.* globals in dev
+  define: {
+    'process.env.NODE_ENV': '"production"',
+  },
+});

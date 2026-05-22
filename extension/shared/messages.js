@@ -1,0 +1,16 @@
+// Message types for chrome.runtime.sendMessage / chrome.tabs.sendMessage
+export const MSG = {
+  // Content → SW
+  FACTCHECK_TEXT: 'FACTCHECK_TEXT',
+  FACTCHECK_IMAGE: 'FACTCHECK_IMAGE',
+  GET_SESSION_ID: 'GET_SESSION_ID',
+  // SW → Content
+  FACTCHECK_RESULT: 'FACTCHECK_RESULT',
+  SHOW_VERDICT: 'SHOW_VERDICT',
+  // Popup → SW
+  TOGGLE_NUCLEAR: 'TOGGLE_NUCLEAR',
+  TOGGLE_EDUCATIONAL: 'TOGGLE_EDUCATIONAL',
+  GET_STATS: 'GET_STATS',
+  // SW → Popup
+  STATS_UPDATE: 'STATS_UPDATE',
+};

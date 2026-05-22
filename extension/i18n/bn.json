@@ -1,0 +1,18 @@
+{
+  "app_name": "ট্রুথলেন্স",
+  "verdict_false": "মিথ্যা",
+  "verdict_misleading": "বিভ্রান্তিকর",
+  "verdict_unverified": "অযাচাইকৃত",
+  "verdict_true": "সত্য",
+  "verdict_unknown": "অজানা",
+  "factchecking": "তথ্য যাচাই করা হচ্ছে…",
+  "analyse_area": "নির্বাচিত এলাকা বিশ্লেষণ করুন",
+  "draw_instruction": "বিশ্লেষণ করতে একটি আয়তক্ষেত্র আঁকুন — বাতিল করতে Esc চাপুন",
+  "vote_agree": "একমত",
+  "vote_disagree": "অসম্মত",
+  "vote_report": "রিপোর্ট করুন",
+  "why_flagged": "ট্রুথলেন্স কেন এটি চিহ্নিত করেছে",
+  "sources": "সূত্র",
+  "settings": "সেটিংস",
+  "dashboard": "ড্যাশবোর্ড"
+}
