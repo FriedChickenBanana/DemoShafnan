@@ -91,12 +91,12 @@ router.post('/text', async (req, res, next) => {
     const aiTextResult = await detectAiWritten(text.slice(0, 1000));
 
     // ── 8. Claude synthesis ──────────────────────────────────────────────────
-    const verdict = await synthesizeVerdict({
-      claim: text,
-      language,
-      factCheckHits,
-      liveNews,
+    const verdict = await synthesizeVerdict(text, {
+      googleFactCheck: factCheckHits,
+      newsSnippets: liveNews,
       claimBusterScore,
+      gptzeroResult: aiTextResult,
+      language,
     });
 
     // ── 9. Persist to DB ─────────────────────────────────────────────────────
@@ -110,7 +110,7 @@ router.post('/text', async (req, res, next) => {
       verdict.verdict,
       verdict.confidence,
       verdict.summary,
-      typeof verdict.whyBot === 'object' ? JSON.stringify(verdict.whyBot) : verdict.whyBot,
+      typeof verdict.why === 'object' ? JSON.stringify(verdict.why) : (verdict.why ?? verdict.whyBot),
       JSON.stringify(verdict.sources || []),
       JSON.stringify(aiTextResult),
       language,
@@ -123,7 +123,7 @@ router.post('/text', async (req, res, next) => {
       verdict: verdict.verdict,
       confidence: verdict.confidence,
       summary: verdict.summary,
-      whyBot: verdict.whyBot,
+      whyBot: verdict.why ?? verdict.whyBot,
       sources: verdict.sources,
       aiGenerated: aiTextResult,
       language,

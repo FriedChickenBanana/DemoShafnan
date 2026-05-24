@@ -36,14 +36,14 @@ router.post('/image', async (req, res, next) => {
     ]);
 
     // ── Claude Vision synthesis ───────────────────────────────────────────────
-    const analysis = await analyzeImage({ imageBase64, reverseImageResults, aiDetectionResult });
+    const analysis = await analyzeImage(imageBase64, null, reverseImageResults, aiDetectionResult);
 
     const result = {
       verdict: analysis.verdict,
       confidence: analysis.confidence,
-      extractedText: analysis.extractedText,
-      sceneDescription: analysis.sceneDescription,
-      impliedClaims: analysis.impliedClaims,
+      extractedText: analysis.extractedText ?? analysis.ocr_text,
+      sceneDescription: analysis.sceneDescription ?? analysis.scene_description,
+      impliedClaims: analysis.impliedClaims ?? analysis.implied_claims,
       summary: analysis.summary,
       whyBot: analysis.whyBot,
       reverseImageMatches: reverseImageResults,

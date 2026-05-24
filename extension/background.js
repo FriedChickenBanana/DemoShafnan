@@ -1,7 +1,7 @@
 import { MSG } from './shared/messages.js';
 
-const BACKEND_URL = 'https://truthlens-api.railway.app'; // replace with actual
-const SHARED_SECRET = 'REPLACE_WITH_ENV_INJECTED_SECRET'; // injected at build time
+const BACKEND_URL = 'http://localhost:3000';
+const SHARED_SECRET = '91969f00c52bd04936f46202f665af0907a9fc6cc07b89b968bc80cb769d2c9b';
 
 // ── Session ID ──────────────────────────────────────────────────────────────
 async function getOrCreateSessionId() {

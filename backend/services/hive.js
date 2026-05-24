@@ -1,6 +1,10 @@
 const axios = require('axios');
 
 async function detectAiGenerated(imageBase64) {
+  // Hive AI bypassed — no API key yet, restore when available
+  return { is_ai_generated: null, confidence: null };
+
+  /* eslint-disable no-unreachable */
   try {
     const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
     const res = await axios.post(
@@ -20,12 +24,13 @@ async function detectAiGenerated(imageBase64) {
     return {
       isAI: aiClass ? aiClass.score > 0.5 : false,
       confidence: aiClass?.score || 0,
-      modelLikelyUsed: null, // Hive doesn't return this
+      modelLikelyUsed: null,
     };
   } catch (err) {
     console.warn('Hive AI detection error:', err.message);
     return { isAI: false, confidence: 0, modelLikelyUsed: null };
   }
+  /* eslint-enable no-unreachable */
 }
 
 module.exports = { detectAiGenerated };

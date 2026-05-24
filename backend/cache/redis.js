@@ -6,6 +6,7 @@ async function initRedis() {
   redis = new Redis(process.env.REDIS_URL, {
     maxRetriesPerRequest: 3,
     enableReadyCheck: true,
+    tls: { rejectUnauthorized: false },
   });
   redis.on('error', (err) => console.error('Redis error:', err));
   await redis.ping();

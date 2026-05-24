@@ -1,106 +1,70 @@
-const Anthropic = require('@anthropic-ai/sdk');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
-const PRIMARY_MODEL = 'claude-sonnet-4-6';
-const ESCALATION_MODEL = 'claude-opus-4-6';
+async function synthesizeVerdict(claim, evidence) {
+  const { googleFactCheck, newsSnippets, claimBusterScore, gptzeroResult, language } = evidence;
 
-// ── Text fact-check synthesis ────────────────────────────────────────────────
-async function synthesizeVerdict({ claim, language, factCheckHits, liveNews, claimBusterScore, escalate = false }) {
-  const model = escalate ? ESCALATION_MODEL : PRIMARY_MODEL;
+  const prompt = `You are a fact-checking assistant. Analyse the following claim and evidence, then return a JSON verdict.
 
-  const systemPrompt = `You are TruthLens, a precise, neutral fact-checking AI. Your job is to evaluate claims using provided evidence.
+Claim: ${claim}
+Language: ${language || 'English'}
+ClaimBuster score: ${claimBusterScore}
+Google Fact Check results: ${JSON.stringify(googleFactCheck)}
+Live news snippets: ${JSON.stringify(newsSnippets)}
+AI-written probability: ${JSON.stringify(gptzeroResult)}
 
-Rules:
-- Be concise and factual. No sensationalism.
-- Never say "this is fake" — explain warning signs neutrally.
-- Always cite sources from the provided evidence.
-- If a claim mentions recent events, weight live news over stale fact-check databases.
-- For Bangla or other non-English claims, respond in the same language as the claim but keep JSON keys in English.
-- Verdicts: TRUE | FALSE | MISLEADING | UNVERIFIED | UNKNOWN
-
-Response format: valid JSON only, no markdown:
+Respond ONLY with a valid JSON object in this exact format, no markdown, no backticks:
 {
-  "verdict": "...",
-  "confidence": 0.00,
-  "summary": "...",
-  "whyBot": {
-    "emotionalLanguage": "...",
-    "sourceQuality": "...",
-    "logicalFallacies": "...",
-    "verifiability": "..."
+  "verdict": "True" | "False" | "Misleading" | "Unverified",
+  "confidence": <number 0-100>,
+  "summary": "<plain English explanation in 2-3 sentences>",
+  "why": {
+    "emotional_language": "<yes/no and brief note>",
+    "source_quality": "<assessment>",
+    "logical_fallacies": "<any detected or none>",
+    "verifiability": "<how verifiable is this claim>"
   },
-  "sources": [{"title": "...", "url": "...", "publisher": "..."}],
-  "category": "political|health|financial|social|other",
-  "timeSensitive": true|false
+  "sources": ["<source url or name if available>"]
 }`;
 
-  const userPrompt = `Claim to evaluate: "${claim}"
-Language detected: ${language}
-ClaimBuster check-worthiness score: ${claimBusterScore ?? 'N/A'}
-
-Fact-check database hits:
-${factCheckHits?.length ? JSON.stringify(factCheckHits, null, 2) : 'None found'}
-
-Live news (last 72h):
-${liveNews?.length ? JSON.stringify(liveNews, null, 2) : 'None found'}`;
-
-  const message = await client.messages.create({
-    model,
-    max_tokens: 1024,
-    messages: [{ role: 'user', content: userPrompt }],
-    system: systemPrompt,
-  });
-
-  const text = message.content[0].text.trim();
-  return JSON.parse(text);
+  const result = await model.generateContent(prompt);
+  const text = result.response.text().trim();
+  const clean = text.replace(/```json|```/g, '').trim();
+  return JSON.parse(clean);
 }
 
-// ── Image/vision analysis ─────────────────────────────────────────────────────
-async function analyzeImage({ imageBase64, reverseImageResults, aiDetectionResult }) {
-  const mediaType = imageBase64.startsWith('data:image/png') ? 'image/png' : 'image/jpeg';
-  const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+async function analyzeImage(imageBase64, mimeType, serpResults, hiveResult) {
+  const visionModel = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
-  const systemPrompt = `You are TruthLens Vision. Analyze this image for misinformation.
+  const prompt = `You are a fact-checking assistant analysing an image.
 
-Your tasks:
-1. Extract any visible text (OCR)
-2. Describe the scene accurately
-3. Identify claims made explicitly or implicitly
-4. Evaluate using provided reverse image search results and AI detection data
-5. Determine if the image is being used misleadingly (e.g., old image presented as new, out-of-context)
+Reverse image search results: ${JSON.stringify(serpResults)}
+AI-generation detection: ${JSON.stringify(hiveResult)}
 
-Response format: valid JSON only:
+Analyse the image and respond ONLY with a valid JSON object, no markdown, no backticks:
 {
-  "verdict": "TRUE|FALSE|MISLEADING|UNVERIFIED|UNKNOWN",
-  "confidence": 0.00,
-  "extractedText": "...",
-  "sceneDescription": "...",
-  "impliedClaims": ["..."],
-  "summary": "...",
-  "whyBot": "...",
-  "sources": [{"title": "...", "url": "..."}]
+  "ocr_text": "<any text visible in the image>",
+  "scene_description": "<what the image shows>",
+  "implied_claims": "<what claims this image makes or implies>",
+  "verdict": "Authentic" | "Misleading" | "AI-Generated" | "Unverified",
+  "confidence": <number 0-100>,
+  "summary": "<plain English explanation in 2-3 sentences>",
+  "is_ai_generated": <true|false|null>
 }`;
 
-  const userContent = [
-    {
-      type: 'image',
-      source: { type: 'base64', media_type: mediaType, data: base64Data },
-    },
-    {
-      type: 'text',
-      text: `Reverse image search results:\n${JSON.stringify(reverseImageResults, null, 2)}\n\nAI generation detection:\n${JSON.stringify(aiDetectionResult, null, 2)}`,
-    },
-  ];
+  const imagePart = {
+    inlineData: {
+      data: imageBase64,
+      mimeType: mimeType || 'image/png'
+    }
+  };
 
-  const message = await client.messages.create({
-    model: PRIMARY_MODEL,
-    max_tokens: 1024,
-    messages: [{ role: 'user', content: userContent }],
-    system: systemPrompt,
-  });
-
-  return JSON.parse(message.content[0].text.trim());
+  const result = await visionModel.generateContent([prompt, imagePart]);
+  const text = result.response.text().trim();
+  const clean = text.replace(/```json|```/g, '').trim();
+  return JSON.parse(clean);
 }
 
 module.exports = { synthesizeVerdict, analyzeImage };
